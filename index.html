@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aether — Live Weather Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-clear-night">
+  <div class="app-shell">
+    <!-- TOP HEADER: Brand, Live Autocomplete Search, Geolocation & Unit Toggle -->
+    <header class="top-bar">
+      <div class="brand" aria-label="Aether Weather">
+        <div class="brand-badge" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>
+        </div>
+        <span>Aether</span>
+      </div>
+
+      <div class="search-wrapper" id="searchWrapper">
+        <div class="search-input-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input
+            type="text"
+            id="citySearchInput"
+            class="search-input"
+            placeholder="Search city, region, or country..."
+            autocomplete="off"
+            aria-label="Search for a city"
+            aria-expanded="false"
+            aria-controls="searchDropdown"
+            role="combobox"
+          />
+          <button type="button" id="clearSearchBtn" class="clear-search-btn" aria-label="Clear search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div id="searchDropdown" class="search-dropdown" role="listbox" aria-label="City suggestions"></div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" id="geoBtn" class="icon-pill-btn" title="Use your current GPS location">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+          </svg>
+          <span>My Location</span>
+        </button>
+
+        <div class="unit-toggle" role="group" aria-label="Measurement units">
+          <button type="button" id="unitMetricBtn" class="unit-btn active" aria-pressed="true">°C</button>
+          <button type="button" id="unitImperialBtn" class="unit-btn" aria-pressed="false">°F</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- QUICK-SELECT PRESETS & PINNED FAVORITES BAR -->
+    <nav class="locations-bar" id="locationsBar" aria-label="Saved and preset cities"></nav>
+
+    <!-- ERROR BANNER -->
+    <div id="errorBanner" class="error-banner" role="alert">
+      <span id="errorMessage">Unable to fetch weather data. Please check your connection.</span>
+      <button type="button" id="retryBtn" class="retry-btn">Retry</button>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="dashboard-grid" id="dashboardGrid">
+      <!-- LEFT COLUMN: Current Weather + Hourly Strip -->
+      <div class="left-column">
+        <section class="glass-panel current-card" id="currentCard" aria-live="polite">
+          <div class="current-header">
+            <div>
+              <h1 class="city-title" id="cityName">Lagos</h1>
+              <p class="city-subtitle" id="cityRegion">Lagos, Nigeria</p>
+              <div class="local-time-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span id="localDateTime">--</span>
+              </div>
+            </div>
+
+            <button type="button" id="pinCityBtn" class="pin-city-btn" aria-label="Pin city to favorites">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <span id="pinCityLabel">Pin</span>
+            </button>
+          </div>
+
+          <div class="current-main">
+            <div class="temp-cluster">
+              <span class="current-temp" id="currentTemp">--</span>
+              <span class="current-unit" id="currentUnitLabel">°C</span>
+            </div>
+
+            <div class="condition-block">
+              <div class="hero-icon-wrap" id="heroWeatherIcon" aria-hidden="true"></div>
+              <div>
+                <div class="condition-label" id="conditionLabel">Loading...</div>
+                <div class="feels-like" id="feelsLikeLabel">Feels like --</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="current-footer">
+            <div class="hi-lo-group">
+              <span>High: <strong class="hi-val" id="todayHigh">--</strong></span>
+              <span>Low: <strong class="lo-val" id="todayLow">--</strong></span>
+            </div>
+            <span id="coordsDisplay">--</span>
+          </div>
+        </section>
+
+        <!-- 24-HOUR HOURLY FORECAST -->
+        <section class="glass-panel hourly-card" aria-label="24-hour forecast">
+          <div class="section-header">
+            <h2 class="section-title">24-Hour Forecast</h2>
+          </div>
+          <div class="hourly-scroll" id="hourlyStrip"></div>
+        </section>
+      </div>
+
+      <!-- RIGHT COLUMN: Atmospheric Metrics + 7-Day Forecast -->
+      <div class="right-column">
+        <section aria-label="Atmospheric conditions">
+          <div class="metrics-grid" id="metricsGrid">
+            <!-- Humidity -->
+            <article class="glass-panel metric-card">
+              <div class="metric-top">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                </svg>
+                <span>Humidity</span>
+              </div>
+              <div class="metric-value" id="metricHumidity">--%</div>
+              <div class="metric-sub" id="metricDewPoint">Dew point --</div>
+            </article>
+
+            <!-- Wind Speed & Direction -->
+            <article class="glass-panel metric-card">
+              <div class="metric-top">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>
+                </svg>
+                <span>Wind</span>
+              </div>
+              <div class="metric-value-row">
+                <div class="metric-value" id="metricWind">--</div>
+                <div class="compass-ring" title="Wind direction">
+                  <svg id="windArrow" class="compass-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="metric-sub" id="metricWindDir">Direction --</div>
+            </article>
+
+            <!-- UV Index -->
+            <article class="glass-panel metric-card">
+              <div class="metric-top">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+                </svg>
+                <span>UV Index</span>
+              </div>
+              <div class="metric-value-row">
+                <div class="metric-value" id="metricUv">--</div>
+                <span class="uv-badge uv-low" id="metricUvBadge">--</span>
+              </div>
+              <div class="metric-sub" id="metricUvAdvice">Peak solar exposure</div>
+            </article>
+
+            <!-- Surface Pressure -->
+            <article class="glass-panel metric-card">
+              <div class="metric-top">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-2 6.3-6.4 2.1 2-6.3z"/>
+                </svg>
+                <span>Pressure</span>
+              </div>
+              <div class="metric-value" id="metricPressure">--</div>
+              <div class="metric-sub" id="metricPressureDesc">Surface hPa</div>
+            </article>
+
+            <!-- Cloud Cover -->
+            <article class="glass-panel metric-card">
+              <div class="metric-top">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                </svg>
+                <span>Cloud Cover</span>
+              </div>
+              <div class="metric-value" id="metricClouds">--%</div>
+              <div class="metric-sub" id="metricCloudDesc">Total sky coverage</div>
+            </article>
+
+            <!-- Precipitation Chance -->
+            <article class="glass-panel metric-card">
+              <div class="metric-top">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/>
+                </svg>
+                <span>Precipitation</span>
+              </div>
+              <div class="metric-value" id="metricPrecipProb">--%</div>
+              <div class="metric-sub" id="metricPrecipAmount">Current rain: --</div>
+            </article>
+          </div>
+        </section>
+
+        <!-- 7-DAY DAILY FORECAST -->
+        <section class="glass-panel daily-card" aria-label="7-day forecast">
+          <div class="section-header">
+            <h2 class="section-title">7-Day Forecast</h2>
+          </div>
+          <div class="daily-list" id="dailyList"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+    <script src="app.js"></script>
+</body>
+</html>
